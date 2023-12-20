@@ -1,0 +1,1 @@
+curl "https://api.openai.com/v1/assistants?order=desc&limit=20"   -H "Content-Type: application/json" -H "Authorization: Bearer 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" -H "OpenAI-Beta: assistants=v1"
