@@ -120,6 +120,7 @@ const App = () => {
         });
     }    
     const createThread = async (): Promise<string> => {
+        console.log('createThread()')
         return await fetch('https://api.openai.com/v1/threads', {
                 method: 'POST',
                 headers: {
@@ -138,18 +139,20 @@ const App = () => {
             });
     }
 
-    const initThread = async (threadId: string) => {
-        setThreadId(threadId);
-        window.localStorage.setItem('threadId', threadId);
+    const initThread = async (_threadId: string) => {
+        setThreadId(_threadId);
+        window.localStorage.setItem('threadId', _threadId);
     }
 
     const initOrCreateThread = async (): Promise<string> => {
         let threadId = window.localStorage.getItem('threadId') || undefined
+        console.log('window.localStorage.getItem(\'threadId\') ', window.localStorage.getItem('threadId') )
         if (threadId) {
             threadId = await getThread(threadId)
         }
         if(!threadId) {
             threadId = await createThread()
+            console.log('new threadId %O', threadId)
         }
         initThread(threadId)
         return threadId
