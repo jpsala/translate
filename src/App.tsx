@@ -79,26 +79,6 @@ const App = () => {
     //     return ;
     // }
 
-    const getThread = async (threadId: string) => {
-        const url = 'https://api.openai.com/v1/threads/' + threadId; // Replace 'thread_abc123' with your actual thread ID
-        
-        return fetch(url, {
-            method: 'GET',
-            headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${OPENAI_API_KEY}`,
-                'OpenAI-Beta': 'assistants=v1'
-            }
-        })
-        .then(response => response.json())
-        .then(data => {
-            return data.id
-        })
-        .catch(() => {
-            window.localStorage.removeItem('threadId')
-            createOrInitThread();
-        });
-    }
 
     const getMessages = async (threadId: string) => {
         const messages = (await fetch('https://api.openai.com/v1/threads/' + threadId + '/messages', {
@@ -120,28 +100,59 @@ const App = () => {
         return messages
     }
 
-    const createOrInitThread = async () => {
-        const threadId = window.localStorage.getItem('threadId') || null
-        initThread(threadId)
-        if(!threadId){
-            await fetch('https://api.openai.com/v1/threads', {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                            'Authorization': `Bearer ${OPENAI_API_KEY}`,
-                            'OpenAI-Beta': 'assistants=v1'
-                        },
-                        body: JSON.stringify({})
-                    })
-                    .then(response => response.json())
-                    .then(data => {
-                        localStorage.setItem('threadId', data.id)
-                        initThread(data.id)
-                    })
-                    .catch(error => {
-                        console.error('Error:', error);
-                    });
+    const getThread = async (threadId: string) => {
+        const url = 'https://api.openai.com/v1/threads/' + threadId; // Replace 'thread_abc123' with your actual thread ID
+        
+        return fetch(url, {
+            method: 'GET',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${OPENAI_API_KEY}`,
+                'OpenAI-Beta': 'assistants=v1'
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            return data.id
+        })
+        .catch(() => {
+            return undefined
+        });
+    }    
+    const createThread = async (): Promise<string> => {
+        return await fetch('https://api.openai.com/v1/threads', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${OPENAI_API_KEY}`,
+                    'OpenAI-Beta': 'assistants=v1'
+                },
+                body: JSON.stringify({})
+            })
+            .then(response => response.json())
+            .then(data => {
+                return data.id
+            })
+            .catch(error => {
+                console.error('Error:', error);
+            });
+    }
+
+    const initThread = async (threadId: string) => {
+        setThreadId(threadId);
+        window.localStorage.setItem('threadId', threadId);
+    }
+
+    const initOrCreateThread = async (): Promise<string> => {
+        let threadId = window.localStorage.getItem('threadId') || undefined
+        if (threadId) {
+            threadId = await getThread(threadId)
         }
+        if(!threadId) {
+            threadId = await createThread()
+        }
+        initThread(threadId)
+        return threadId
     }
 
     const createMessage = async (threadId: string | null, text: string) => {
@@ -282,20 +293,13 @@ const App = () => {
         checkRun(threadId, run.id)
 
     }
-
-    const initThread = async (threadId: string | null) => {
-        if (threadId) {
-            setThreadId(threadId);
-            await getThread(threadId);
-            await getMessages(threadId);
-        }
-    }
-
     
     useEffect(() => {
         console.log('Translate page loaded, threadId %O, assistentId %O', threadId, ASSISTENT_ID);
         // getAssistants()
-        createOrInitThread()
+        initOrCreateThread().then((threadId) => {
+            getMessages(threadId);
+        })
         inputRef && inputRef.current && inputRef.current.focus();
         const interval = setTimeout(() => {
             inputRef && inputRef.current && inputRef.current.focus();
