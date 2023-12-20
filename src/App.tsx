@@ -126,13 +126,6 @@ const App = () => {
         });
     }    
     const createThread = async (): Promise<string | undefined> => {
-        console.log('createThread()')
-        if(!OPENAI_API_KEY || !ASSISTENT_ID){
-            console.error('Missing OpenAI API key or assistant_id')
-            setError('Missing OpenAI API key')
-            return
-        }
-        
         return await fetch('https://api.openai.com/v1/threads', {
                 method: 'POST',
                 headers: {
@@ -313,6 +306,12 @@ const App = () => {
     
     useEffect(() => {
         console.log('Translate page loaded, threadId %O, assistentId %O', threadId, ASSISTENT_ID);
+        console.log('createThread()')
+        if(!OPENAI_API_KEY || !ASSISTENT_ID){
+            console.error('Missing OpenAI API key or assistant_id')
+            setError('Missing OpenAI API key')
+            return
+        }
         // getAssistants()
         initOrCreateThread().then((threadId) => {
             threadId && getMessages(threadId);
