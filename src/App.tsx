@@ -6,8 +6,9 @@ import { useRef } from 'react';
 import './App.css';
 
 
-const OPENAI_API_KEY = process.env.OPEN_AI_KEY;
-const ASSISTENT_ID = process.env.ASSISTENT_ID;
+const OPENAI_API_KEY = import.meta.env.VITE_OPEN_AI_KEY;
+const ASSISTENT_ID = import.meta.env.VITE_ASSISTENT_ID;
+console.log('OPENAI_API_KEY', OPENAI_API_KEY, 'ASSISTENT_ID', ASSISTENT_ID);
 type ChatMessage = {
     role: string;
     content: string;
@@ -16,6 +17,7 @@ const App = () => {
     const [inputString, setInputString] = useState<string>("");
     const [loading, setLoading] = useState<boolean>(false);
     const [threadId, setThreadId] = useState<string | null>(null);
+    const [error, setError] = useState<any>(null);
     // const [currentRun, setCurrentRun] = useState<any>(null);
     const inputRef = useRef<HTMLTextAreaElement>(null);
     const [chatMessages, setChatMessages] = useState<ChatMessage[]>([]);
@@ -113,13 +115,17 @@ const App = () => {
         })
         .then(response => response.json())
         .then(data => {
+            if(data?.error?.code === 'invalid_api_key'){
+                setError(data.error.code)
+                console.log('createThread() data %O', data.error.message)
+            }
             return data.id
         })
         .catch(() => {
             return undefined
         });
     }    
-    const createThread = async (): Promise<string> => {
+    const createThread = async (): Promise<string | undefined> => {
         console.log('createThread()')
         return await fetch('https://api.openai.com/v1/threads', {
                 method: 'POST',
@@ -136,7 +142,8 @@ const App = () => {
                 return data.id
             })
             .catch(error => {
-                console.error('Error:', error);
+                console.error('Error code %O, message %O', error.code, error.message);
+                return undefined
             });
     }
 
@@ -145,7 +152,7 @@ const App = () => {
         window.localStorage.setItem('threadId', _threadId);
     }
 
-    const initOrCreateThread = async (): Promise<string> => {
+    const initOrCreateThread = async (): Promise<string | undefined> => {
         let threadId = window.localStorage.getItem('threadId') || undefined
         console.log('window.localStorage.getItem(\'threadId\') ', window.localStorage.getItem('threadId') )
         if (threadId) {
@@ -155,7 +162,7 @@ const App = () => {
             threadId = await createThread()
             console.log('new threadId %O', threadId)
         }
-        initThread(threadId)
+        threadId && initThread(threadId)
         return threadId
     }
 
@@ -302,7 +309,7 @@ const App = () => {
         console.log('Translate page loaded, threadId %O, assistentId %O', threadId, ASSISTENT_ID);
         // getAssistants()
         initOrCreateThread().then((threadId) => {
-            getMessages(threadId);
+            threadId && getMessages(threadId);
         })
         inputRef && inputRef.current && inputRef.current.focus();
         const interval = setTimeout(() => {
@@ -316,8 +323,8 @@ const App = () => {
 
     return (
         <div className="App">
-            {/* <pre>{JSON.stringify(chatMessages, null, 2)}</pre> */}
-            <Box sx={{ display: 'flex', flexDirection: 'row', height: '100vh'}}>
+            {error ? (<b>Error: {error}</b>) : null}
+            {!error ? (<Box sx={{ display: 'flex', flexDirection: 'row', height: '100vh'}}>
                 <Box sx={{ width: '0vw', height: "100vh", display: "flex",flexDirection: "column"}}>
                     {/* {chatMessages && chatMessages.map((message, index) => (
                         <div key={index} style={{ padding: '10px', fontSize: '1.1rem', whiteSpace: 'pre-wrap' }}>
@@ -360,6 +367,7 @@ const App = () => {
                     </Box>
                 </Box>
             </Box>
+            ) : null}
         </div>
     );
 };
