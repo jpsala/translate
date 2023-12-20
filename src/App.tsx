@@ -9,7 +9,7 @@ import './App.css';
 const OPENAI_API_KEY = import.meta.env.VITE_OPEN_AI_KEY;
 const ASSISTENT_ID = import.meta.env.VITE_ASSISTENT_ID;
 const TEST = import.meta.env.TEST;
-console.log('OPENAI_API_KEY', OPENAI_API_KEY, 'ASSISTENT_ID', ASSISTENT_ID, TEST);
+console.log('OPENAI_API_KEY', OPENAI_API_KEY, 'ASSISTENT_ID', ASSISTENT_ID, TEST, import.meta);
 type ChatMessage = {
     role: string;
     content: string;
