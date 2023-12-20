@@ -100,7 +100,7 @@ const App = () => {
         return messages
     }
 
-    const getThread = async (threadId: string) => {
+    const getThread = async (threadId: string | undefined) => {
         const url = 'https://api.openai.com/v1/threads/' + threadId; // Replace 'thread_abc123' with your actual thread ID
         
         return fetch(url, {
@@ -132,6 +132,7 @@ const App = () => {
             })
             .then(response => response.json())
             .then(data => {
+                console.log('createThread() data %O', data)
                 return data.id
             })
             .catch(error => {
