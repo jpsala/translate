@@ -6,10 +6,8 @@ import { useRef } from 'react';
 import './App.css';
 
 
-const OPENAI_API_KEY = import.meta.env.VITE_OPEN_AI_KEY;
-const ASSISTENT_ID = import.meta.env.VITE_ASSISTENT_ID;
-const TEST = import.meta.env.TEST;
-console.log('OPENAI_API_KEY', OPENAI_API_KEY, 'ASSISTENT_ID', ASSISTENT_ID, TEST, import.meta);
+let OPENAI_API_KEY = localStorage.getItem('OPENAI_API_KEY');
+const ASSISTENT_ID = 'asst_GDwH8D6pX1zmPBLzSSqeXshG';
 type ChatMessage = {
     role: string;
     content: string;
@@ -154,7 +152,6 @@ const App = () => {
 
     const initOrCreateThread = async (): Promise<string | undefined> => {
         let threadId = window.localStorage.getItem('threadId') || undefined
-        console.log('window.localStorage.getItem(\'threadId\') ', window.localStorage.getItem('threadId') )
         if (threadId) {
             threadId = await getThread(threadId)
         }
@@ -170,7 +167,7 @@ const App = () => {
 
         const data = {
             role: "user",
-            content: text
+            content: `${text}`, // Replace with your message text
         };
 
         return fetch('https://api.openai.com/v1/threads/' + threadId + '/messages', {
@@ -216,7 +213,7 @@ const App = () => {
         }
     }
     
-    async function createRun(threadId: string): Promise<any> {
+    async function createThreadsRuns(threadId: string): Promise<any> {
         const url: string = `https://api.openai.com/v1/threads/${threadId}/runs`;
     
         const postData: object = {
@@ -244,7 +241,7 @@ const App = () => {
         }
     }
     
-    async function getRun(threadId: string, runId: string): Promise<any> {
+    async function getThreadsRuns(threadId: string, runId: string): Promise<any> {
         const url: string = `https://api.openai.com/v1/threads/${threadId}/runs/${runId}`;
     
         try {
@@ -273,7 +270,7 @@ const App = () => {
         return new Promise((resolve, reject) => {
             setLoading(true);
             const intervalHandler = setInterval(() => {
-                getRun(threadId, runId).then((run) => {
+                getThreadsRuns(threadId, runId).then((run) => {
                     if (run?.status === 'completed') {
                         clearInterval(intervalHandler);
                         getMessages(threadId).then((messages) => {
@@ -298,7 +295,7 @@ const App = () => {
         }
         const message = await createMessage(threadId, text)
         getMessageDetails(threadId, message.id)
-        const run = await createRun(threadId);
+        const run = await createThreadsRuns(threadId);
         // setCurrentRun(run)
         
         checkRun(threadId, run.id)
@@ -306,12 +303,15 @@ const App = () => {
     }
     
     useEffect(() => {
-        console.log('Translate page loaded, threadId %O, assistentId %O', threadId, ASSISTENT_ID);
-        console.log('createThread()')
-        if(!OPENAI_API_KEY || !ASSISTENT_ID){
-            console.error('Missing OpenAI API key or assistant_id')
-            setError('Missing OpenAI API key')
-            return
+        if(!OPENAI_API_KEY){
+            const prompt = window.prompt('Please enter your OpenAI API key:', '')
+            if(prompt) {
+                window.localStorage.setItem('OPENAI_API_KEY', prompt);
+                OPENAI_API_KEY = prompt
+            } else {
+                setError('Missing OpenAI API key')
+                return
+            }
         }
         // getAssistants()
         initOrCreateThread().then((threadId) => {
