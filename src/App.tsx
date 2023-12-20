@@ -127,6 +127,12 @@ const App = () => {
     }    
     const createThread = async (): Promise<string | undefined> => {
         console.log('createThread()')
+        if(!OPENAI_API_KEY || !ASSISTENT_ID){
+            console.error('Missing OpenAI API key or assistant_id')
+            setError('Missing OpenAI API key')
+            return
+        }
+        
         return await fetch('https://api.openai.com/v1/threads', {
                 method: 'POST',
                 headers: {
