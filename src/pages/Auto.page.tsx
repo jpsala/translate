@@ -14,7 +14,6 @@ const AutoPage: React.FC = () => {
     const [error, setError] = useState<any>(null);
     // const [currentRun, setCurrentRun] = useState<any>(null);
     const [searchParams] = useSearchParams();
-    const [ready, setReady] = useState<boolean>(false)
     const [response, setResponse] = useState<any>(null);
     // const [assistants, setAssistants] = useState<any[]>([]);
 
@@ -243,8 +242,6 @@ const AutoPage: React.FC = () => {
             checkRun(threadId, run.id)
         } catch (error) {
             console.log('Error:', error);
-        } finally {
-         setReady(true)   
         }
 
     }
@@ -267,7 +264,6 @@ const AutoPage: React.FC = () => {
         initOrCreateThread().then((threadId) => {
             console.log('threadId', threadId)
             threadId && getMessages(threadId);
-            setReady(true)
             console.log('Ready', threadId)
             sendMessage(searchParams.get('text') || 'test')
         })
