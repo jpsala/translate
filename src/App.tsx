@@ -10,8 +10,8 @@ function App() {
     <Container maxWidth="xl">
         <Routes>
             <Route path="/" element={<HomePage />} />
-            {/* <Route path="/translate" element={<HomePage />} /> */}
-            <Route path="/auto" element={<AutoPage />} />
+            <Route path="/translate" element={<HomePage />} />
+            <Route path="/translate/auto" element={<AutoPage />} />
         </Routes>
     </Container>
   );

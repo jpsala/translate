@@ -199,9 +199,6 @@ const AutoPage: React.FC = () => {
 
     const checkRun = async (threadId: string, runId: any, interval: number = 5000) => {
         return new Promise((resolve, reject) => {
-            if(loading) {
-                return;
-            }
             setLoading(true);
             const intervalHandler = setInterval(() => {
                 getThreadsRuns(threadId, runId).then((run) => {
@@ -237,14 +234,13 @@ const AutoPage: React.FC = () => {
         if(!threadId) {
             return;
         }
-        setReady(false)
+        setLoading(true)
         try {
             const message = await createMessage(threadId, text)
             getMessageDetails(threadId, message.id)
             const run = await createThreadsRuns(threadId);
             // setCurrentRun(run)
             checkRun(threadId, run.id)
-            setReady(true)
         } catch (error) {
             console.log('Error:', error);
         } finally {
@@ -255,17 +251,8 @@ const AutoPage: React.FC = () => {
     
 
     useEffect(() => {
-        console.log('text')
-        if(!ready) return
-        const text = searchParams.get('text')
-        if(text) {
-            // sendMessage(text)
-        }
-
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [ready])
-
-    useEffect(() => {
+        console.log('Starting...')
+        setLoading(true)
         if(!OPENAI_API_KEY){
             const prompt = window.prompt('Please enter your OpenAI API key:', '')
             if(prompt) {
@@ -281,6 +268,7 @@ const AutoPage: React.FC = () => {
             console.log('threadId', threadId)
             threadId && getMessages(threadId);
             setReady(true)
+            console.log('Ready', threadId)
             sendMessage(searchParams.get('text') || 'test')
         })
     // eslint-disable-next-line react-hooks/exhaustive-deps
