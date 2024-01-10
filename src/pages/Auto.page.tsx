@@ -10,7 +10,6 @@ const ASSISTENT_ID = 'asst_Mg3X25EdbfOMFDDVOflKFeWz';
 
 const AutoPage: React.FC = () => {
     const [loading, setLoading] = useState<boolean>(false);
-    const [threadId, setThreadId] = useState<string | null>(null);
     const [error, setError] = useState<any>(null);
     // const [currentRun, setCurrentRun] = useState<any>(null);
     const [searchParams] = useSearchParams();
@@ -19,6 +18,7 @@ const AutoPage: React.FC = () => {
 
 
     const getMessages = async (threadId: string) => {
+        console.log('getMessages() threadId %O', threadId)
         const messages = (await fetch('https://api.openai.com/v1/threads/' + threadId + '/messages', {
             method: 'GET',
             headers: {
@@ -35,7 +35,7 @@ const AutoPage: React.FC = () => {
     const getThread = async (threadId: string | undefined) => {
         const url = 'https://api.openai.com/v1/threads/' + threadId; // Replace 'thread_abc123' with your actual thread ID
         
-        return fetch(url, {
+        return await fetch(url, {
             method: 'GET',
             headers: {
                 'Content-Type': 'application/json',
@@ -77,7 +77,6 @@ const AutoPage: React.FC = () => {
     }
 
     const initThread = async (_threadId: string) => {
-        setThreadId(_threadId);
         window.localStorage.setItem('threadId', _threadId);
     }
 
@@ -90,8 +89,8 @@ const AutoPage: React.FC = () => {
             threadId = await createThread()
             console.log('new threadId %O', threadId)
         }
-        threadId && initThread(threadId)
-        return threadId
+        threadId && await initThread(threadId)
+        return threadId || '' as string
     }
 
     const createMessage = async (threadId: string | null, text: string) => {
@@ -101,7 +100,7 @@ const AutoPage: React.FC = () => {
             content: `${text}`, // Replace with your message text
         };
 
-        return fetch('https://api.openai.com/v1/threads/' + threadId + '/messages', {
+        return await fetch('https://api.openai.com/v1/threads/' + threadId + '/messages', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -197,12 +196,14 @@ const AutoPage: React.FC = () => {
     }
 
     const checkRun = async (threadId: string, runId: any, interval: number = 5000) => {
-        return new Promise((resolve, reject) => {
+        return await new Promise((resolve, reject) => {
             setLoading(true);
             const intervalHandler = setInterval(() => {
+                console.log('Checking run...');
                 getThreadsRuns(threadId, runId).then((run) => {
                     if (run?.status === 'completed') {
                         clearInterval(intervalHandler);
+                        console.log('Run completed, getting messages...');
                         getMessages(threadId).then((messages) => {
                             console.log('Messages:', messages);
                             messages.forEach((message: { role: string; content: Array<{ text: { value: string } }>; }) => {
@@ -229,14 +230,16 @@ const AutoPage: React.FC = () => {
     }
 
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    const sendMessage = async (text: string) => {
+    const sendMessage = async (threadId: string, text: string) => {
         if(!threadId) {
+            console.log('NO threadId, aborting!')
             return;
         }
         setLoading(true)
         try {
+            console.log('Sending:', text)
             const message = await createMessage(threadId, text)
-            getMessageDetails(threadId, message.id)
+            await getMessageDetails(threadId, message.id)
             const run = await createThreadsRuns(threadId);
             // setCurrentRun(run)
             checkRun(threadId, run.id)
@@ -263,9 +266,12 @@ const AutoPage: React.FC = () => {
         // getAssistants()
         initOrCreateThread().then((threadId) => {
             console.log('threadId', threadId)
-            threadId && getMessages(threadId);
             console.log('Ready', threadId)
-            sendMessage(searchParams.get('text') || 'test')
+            if(!threadId) {
+                setError('Missing threadId')
+                return
+            }
+            sendMessage(threadId, searchParams.get('text') || 'test')
         })
     // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [])
