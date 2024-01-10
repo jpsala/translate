@@ -4,6 +4,6 @@ export default defineConfig(({ mode }) => {
   console.log('Translator running in ', mode)
   return {
     plugins: [react()],
-    base: '/translate/'
+    base: mode === 'development' ? '/' : '/translate/'
   }
 })
