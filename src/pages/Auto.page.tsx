@@ -248,7 +248,7 @@ const AutoPage: React.FC = () => {
     
 
     useEffect(() => {
-        console.log('Starting...')
+        console.log('Auto Page')
         setLoading(true)
         if(!OPENAI_API_KEY){
             const prompt = window.prompt('Please enter your OpenAI API key:', '')

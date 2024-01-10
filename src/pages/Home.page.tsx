@@ -308,6 +308,7 @@ const HomePage: React.FC = () => {
     }
     
     useEffect(() => {
+        console.log('Home Page')
         if(!OPENAI_API_KEY){
             const prompt = window.prompt('Please enter your OpenAI API key:', '')
             if(prompt) {
